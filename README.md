@@ -45,3 +45,5 @@ If you changed code in sibling repos `task-manager-frontend` or `task-manager-ba
 
 ## Need more details?
 See [docs/TECHNICAL_DETAILS.md](docs/TECHNICAL_DETAILS.md) for Terraform, cluster design, cost controls, autoscaling, networking, and troubleshooting.
+
+Also see the high-level architecture diagram: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
