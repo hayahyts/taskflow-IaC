@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-backend
+  namespace: default
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: taskflow-backend
+  template:
+    metadata:
+      labels:
+        app: taskflow-backend
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          image: 226680475141.dkr.ecr.us-east-2.amazonaws.com/taskflow-backend:v0.1.1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1024Mi"
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "dev"
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "postgres"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: JWT_SECRET
+              value: "your-jwt-secret-key-here"
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 50
+              preference:
+                matchExpressions:
+                  - key: capacity-type
+                    operator: In
+                    values:
+                      - spot
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskflow-backend-service
+  namespace: default
+spec:
+  selector:
+    app: taskflow-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: taskflow-backend-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: taskflow-backend
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
