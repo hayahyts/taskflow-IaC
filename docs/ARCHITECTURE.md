@@ -6,10 +6,10 @@ This diagram shows how Terraform-provisioned AWS resources, EKS, and your Kubern
 flowchart LR
   subgraph AWS[Amazon Web Services - Account 226680475141]
     subgraph VPC[VPC + Subnets + Security Groups]
-      NLB[ELBv2 NLB\ninternet-facing]
+      NLB[ELBv2 NLB<br/>internet-facing]
       subgraph EKS[EKS: taskflow-dev-eks]
         CP[(EKS Control Plane)]
-        subgraph NodeGroup[EC2 Node Group (t3.small x3)]
+        subgraph NodeGroup[EC2 Node Group - 3 nodes]
           N1[(Node 1)]
           N2[(Node 2)]
           N3[(Node 3)]
@@ -19,9 +19,9 @@ flowchart LR
           SVCF[Service: frontend]
           SVCB[Service: backend]
           subgraph Apps[Applications]
-            FE[(Deployment: taskflow-frontend\nPods)]
-            BE[(Deployment: taskflow-backend\nPods)]
-            PG[(Deployment: postgres\nPod)]
+            FE[(Deployment: taskflow-frontend<br/>Pods)]
+            BE[(Deployment: taskflow-backend<br/>Pods)]
+            PG[(Deployment: postgres<br/>Pod)]
           end
         end
       end
