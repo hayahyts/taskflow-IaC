@@ -169,6 +169,31 @@ cd envs/dev
 terraform destroy -auto-approve
 ```
 
+If you see an error saying the cluster has node groups attached, remove them first and then rerun the destroy:
+```bash
+aws eks list-nodegroups --cluster-name taskflow-dev-eks --region us-east-2
+```
+Example output:
+```json
+{
+    "nodegroups": [
+        "default-20251006210852453600000017"
+    ]
+}
+```
+Delete and wait for each node group shown (use your exact names):
+```bash
+aws eks delete-nodegroup --cluster-name taskflow-dev-eks --nodegroup-name default-20251006210852453600000017 --region us-east-2
+aws eks wait nodegroup-deleted --cluster-name taskflow-dev-eks --nodegroup-name default-20251006210852453600000017 --region us-east-2
+```
+
+If you see errors about image repositories not being empty force-delete the repos:
+
+```bash
+aws ecr delete-repository --repository-name taskflow-frontend --region us-east-2 --force
+aws ecr delete-repository --repository-name taskflow-backend --region us-east-2 --force
+```
+
 3) Optional: remove the bootstrap (not typical — this wipes Terraform’s saved records):
 ```bash
 # First make sure step 2 finished successfully.
