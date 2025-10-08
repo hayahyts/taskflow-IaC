@@ -149,4 +149,36 @@ If the browser can’t reach the app, wait a minute or two for the public URL to
 
 With these steps, a non-DevOps person can take the app from nothing to a working public URL.
 
+---
+
+## 10) Destroying everything (when you’re done)
+Goal: cleanly remove the app and the infrastructure.
+
+Order matters: app first, then infrastructure. Only remove the bootstrap if you truly want to wipe everything.
+
+1) Remove the app (including the public URL):
+```bash
+kubectl delete -f k8s-manifests/
+# Optional: uninstall the ingress controller (removes the public entry point)
+kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/aws/deploy.yaml
+```
+
+2) Destroy the dev infrastructure:
+```bash
+cd envs/dev
+terraform destroy -auto-approve
+```
+
+3) Optional: remove the bootstrap (not typical — this wipes Terraform’s saved records):
+```bash
+# First make sure step 2 finished successfully.
+cd ../..
+cd bootstrap
+# If Terraform asks you to empty the S3 bucket first (it’s versioned),
+# use the AWS Console to empty the bucket, then run:
+terraform destroy -auto-approve
+```
+
+Tip: Keep the bootstrap unless you’re retiring the account — it stores history/locks for safe changes.
+
 
