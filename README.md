@@ -44,6 +44,8 @@ Start here if you just want to run and access the app. No DevOps background need
 If you changed code in sibling repos `task-manager-frontend` or `task-manager-backend`, build and push images to ECR, then restart deployments. Ask a DevOps engineer or see [Technical Details](docs/TECHNICAL_DETAILS.md) for the exact commands.
 
 ## Need more details?
-See [docs/TECHNICAL_DETAILS.md](docs/TECHNICAL_DETAILS.md) for Terraform, cluster design, cost controls, autoscaling, networking, and troubleshooting.
+See [docs/GETTING_STARTED_INFRA.md](docs/GETTING_STARTED_INFRA.md) for a plain-English, end-to-end guide from zero to running.
+
+For deeper DevOps details, see [docs/TECHNICAL_DETAILS.md](docs/TECHNICAL_DETAILS.md) for Terraform, cluster design, cost controls, autoscaling, networking, and troubleshooting.
 
 Also see the high-level architecture diagram: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
