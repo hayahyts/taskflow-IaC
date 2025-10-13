@@ -83,6 +83,30 @@ This adds a standard “front door” to the cluster. It will later give you a p
 ## 5) Deploy the app
 Purpose: run the frontend, backend, database, and the routing rules.
 
+Before you run this, do these two quick prep steps (once per environment):
+
+- Create the Postgres password secret:
+```bash
+kubectl create secret generic postgres-secret \
+  --from-literal=password='your-dev-password' \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+- Build and push the real frontend/backend images to your ECR repos (replace the repo URLs with yours from step 2 outputs or `aws ecr describe-repositories`). Building for linux/amd64 avoids "exec format" errors on the cluster:
+```bash
+# Log in once
+aws ecr get-login-password --region us-east-2 | \
+  docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com
+
+# Frontend (from your frontend repo folder)
+docker buildx build --platform linux/amd64 \
+  -t <ECR_URL>/taskflow-frontend:v0.1.1 --push .
+
+# Backend (from your backend repo folder)
+docker buildx build --platform linux/amd64 \
+  -t <ECR_URL>/taskflow-backend:v0.1.2 --push .
+```
+
 Run from repo root:
 ```bash
 kubectl apply -f k8s-manifests/
@@ -95,6 +119,15 @@ What this includes:
 - Ingress (the routing rules):
   - `/` → frontend
   - `/api` → backend
+
+If your pushed image tags differ from the defaults in the manifests, update the running deployments after apply:
+```bash
+# Example: point the cluster to your freshly pushed tags
+kubectl set image deploy/taskflow-frontend frontend=<ECR_URL>/taskflow-frontend:v0.1.1
+kubectl set image deploy/taskflow-backend backend=<ECR_URL>/taskflow-backend:v0.1.2
+kubectl rollout status deploy/taskflow-frontend
+kubectl rollout status deploy/taskflow-backend
+```
 
 ---
 
@@ -109,6 +142,8 @@ kubectl get ingress taskflow-ingress -o jsonpath='{.status.loadBalancer.ingress[
 Open the printed URL in your browser:
 - Frontend is served at `/`
 - Backend API is at `/api`
+
+Tip: It can take 1–2 minutes for the URL to become reachable after the first deploy.
 
 ---
 
@@ -136,9 +171,30 @@ kubectl get pods
 kubectl logs deploy/taskflow-frontend
 kubectl logs deploy/taskflow-backend
 kubectl get ingress taskflow-ingress
+kubectl get endpoints
+kubectl describe pod -l app=taskflow-frontend
+kubectl describe pod -l app=taskflow-backend
 ```
 
 If the browser can’t reach the app, wait a minute or two for the public URL to appear and the app to finish starting.
+
+Troubleshooting quick fixes:
+- ImagePullBackOff on frontend/backend:
+  - Build and push images to ECR (see step 5 prep) and then run:
+    ```bash
+    kubectl set image deploy/taskflow-frontend frontend=<ECR_URL>/taskflow-frontend:<tag>
+    kubectl set image deploy/taskflow-backend backend=<ECR_URL>/taskflow-backend:<tag>
+    kubectl rollout status deploy/taskflow-frontend && kubectl rollout status deploy/taskflow-backend
+    ```
+- Postgres CreateContainerConfigError (secret not found): create the secret:
+  ```bash
+  kubectl create secret generic postgres-secret --from-literal=password='your-dev-password'
+  ```
+- "exec format error" when a container starts: rebuild and push your image for linux/amd64 using `docker buildx build --platform linux/amd64 ...`.
+- Ingress returns 503: ensure pods are Ready and services have endpoints:
+  ```bash
+  kubectl get pods; kubectl get endpoints
+  ```
 
 ---
 
